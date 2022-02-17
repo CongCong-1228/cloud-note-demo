@@ -129,7 +129,7 @@ export default {
 }
 </script>
 
-<style  >
+<style  scoped>
 /*遮罩，遮住全屏*/
 .model-mask {
   position: fixed;

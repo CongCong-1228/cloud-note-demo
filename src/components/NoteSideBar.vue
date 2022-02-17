@@ -3,14 +3,12 @@
     <div class="header">
       <div class="dropdown">
         <el-dropdown @command="handleCommand">
-      <span class="el-dropdown-link">我的笔记本1<i class="el-icon-arrow-down el-icon--right"></i>
+      <span class="el-dropdown-link">{{ curBook.title }}<i class="el-icon-arrow-down el-icon--right"></i>
       </span>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item command="a">黄金糕</el-dropdown-item>
-            <el-dropdown-item command="b">狮子头</el-dropdown-item>
-            <el-dropdown-item command="c">螺蛳粉</el-dropdown-item>
-            <el-dropdown-item command="d" disabled>双皮奶</el-dropdown-item>
-            <el-dropdown-item command="e" divided>蚵仔煎</el-dropdown-item>
+            <el-dropdown-item :command="notebook" v-for="notebook in notebooks" :key="notebook.title">
+              {{ notebook.title }}
+            </el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -20,9 +18,11 @@
       <div class="left">更新时间</div>
       <div class="right">标题</div>
     </div>
-    <div class="list" v-for="note in notes" :key="note.title" @click="onactive" :class="{active:isNoteActive}">
-      <span class="list-note">{{ note.updateTime }}</span>
-      <span class="list-note">{{ note.title }}</span>
+    <div class="list" v-for="note in notes" :key="note.title">
+      <router-link class="link" :to="`/note?noteId=${note.id}&notebookId=${curBook.id}`">
+        <span class="date" @click="con(note)">{{ note.createdfriendly }}</span>
+        <span class="title">{{ note.title }}</span>
+      </router-link>
     </div>
 
   </div>
@@ -30,31 +30,47 @@
 
 
 <script>
+import Notebooks from '../apis/notebook'
+import Notes from '../apis/notes'
+
 export default {
   data() {
     return {
-      isNoteActive: false,
-      notes: [
-        {updateTime: '刚刚', title: '第一个笔记'},
-        {updateTime: '3分钟前', title: '第二个笔记'},
-      ],
+      notebooks: [],
+      notes: [],
+      curBook: {},
     }
   },
+  created() {
+    Notebooks.getAll().then(res => {
+      this.notebooks = res.data
+      this.curBook = this.notebooks.find(notebook => notebook.id.toString() === this.$route.query.notebookId)
+        || this.notebooks[0] || {}
+      console.log(this.curBook)
+      return Notes.getAll({notebookId: this.curBook.id})
+        .then(res => this.notes = res.data)
+    })
+  },
   methods: {
-    handleCommand(command) {
-      this.$message('click on item ' + command);
+    con(x){
+      console.log(x)
+      console.log(x.createdfriendly)
     },
-    onactive(e) {
-      let ele = e.currentTarget
-      console.log(ele.siblings)
-    }
-  }
+    handleCommand(command) {
+      this.curBook = command
+      this.$message('click on notebookId ' + command.id);
+      Notes.getAll({notebookId: command.id})
+        .then(res => {
+          this.notes = res.data
+        })
+    },
+  },
 }
 </script>
 
 <style scoped>
 .note-sidebar {
-  width: 390px;
+  width: 320px;
   height: 100%;
 }
 
@@ -80,22 +96,26 @@ export default {
   display: flex;
 }
 
-.main div {
+.main .left {
   width: 50%;
   border-bottom: 1px solid #ccc;
-}
-
-.main .left {
+  text-align: center;
   border-right: 1px solid #ccc;
 }
 
-.list {
+.main .right {
+  width: 50%;
+  border-bottom: 1px solid #ccc;
+  text-align: center;
+}
+
+.link {
   display: flex;
 }
 
-.list .list-note {
+.title, .date {
   width: 50%;
-  display: inline-block;
+  text-align: center;
 }
 
 .list.active {

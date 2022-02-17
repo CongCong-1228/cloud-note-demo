@@ -2,7 +2,7 @@
   <div id="notebook-list">
     <header>
       <a class="new-book">
-        <i>img</i>
+        <span class="iconfont icon-error"></span>
         <span @click="onCreate">新建笔记本</span>
       </a>
     </header>
@@ -47,7 +47,6 @@ export default {
       },
     )
     Notebook.getAll().then(res => {
-      console.log(res)
       this.notebooks = Array.from(res.data)
     })
   },

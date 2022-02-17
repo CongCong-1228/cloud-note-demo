@@ -18,10 +18,14 @@ export function friendlyDate(dataStr) {
     case space < 1000 * 3600 * 24:
       str = Math.floor(space / 1000 * 3600) + '小时前'
       break
-    // 一年内
-    default:
+    // 一月内
+    case space < 1000 * 3600 * 24 * 30:
       str = Math.floor(space / (1000 * 3600 * 24)) + '天前'
+      break
+    default:
+      str = '很久之前'
   }
+
   return str
 }
 
