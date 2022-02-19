@@ -1,42 +1,55 @@
 <template>
   <div id="notebook">
-    <NoteSideBar class="note-list"></NoteSideBar>
+    <NoteSideBar class="note-list" @update:notes="res=>this.notes = res"></NoteSideBar>
     <div class="note-detail">
-      <div class="note-bar">
-        <span> 创建日期: {{ curNote.createdAtFriendly }} </span>
-        <span> 更新事件: {{ curNote.updatedAtFriendly }} </span>
-        <span> {{ curNote.statusText }} </span>
-        <span class="iconfont icon-delete"></span>
-        <span class="iconfont icon-fullscreen"></span>
-      </div>
-      <div class="note-title">
-        <input type="text" :value="curNote.title" placeholder="输入标题">
-      </div>
-      <div class="editor">
-        <textarea v-show="true" :value="curNote.content" placeholder="输入内容，支持 markdown 语法"></textarea>
-        <div class="preview markdown-body" v-show="false"></div>
+      <div v-show="!curNote.id" class="note-empty">请选择笔记</div>
+      <div v-show="curNote.id" class="note-main">
+        <div class="note-bar">
+          <span> 创建日期: {{ curNote.createdfriendly }} </span>
+          <span> 更新时间: {{ curNote.updatedfriendly }} </span>
+          <span> {{ statusText }} </span>
+          <span class="iconfont icon-delete" @click="deleteNote"></span>
+          <span class="iconfont icon-fullscreen" @click="isShowPreview=!isShowPreview"></span>
+        </div>
+        <div class="note-title">
+          <input type="text" v-model="curNote.title" placeholder="输入标题" @input="updateNote"
+                 @keydown="statusText = '正在输入...'">
+        </div>
+        <div class="editor">
+          <textarea v-show="!isShowPreview" v-model="curNote.content" placeholder="输入内容，支持 markdown 语法"
+                    @input="updateNote" @keydown="statusText = '正在输入...'"></textarea>
+          <div class="preview markdown-body" v-html="previewContent" v-show="isShowPreview">
+          </div>
+        </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script>
 import Auth from '../apis/auth'
 import NoteSideBar from '../components/NoteSideBar'
+import Bus from '../helpers/bus'
+import _ from 'lodash'
+import Notes from '../apis/notes'
+import MarkdownIt from 'markdown-it'
+
+let md = new MarkdownIt()
 
 export default {
   components: {NoteSideBar},
   name: 'Login',
   data() {
     return {
-      curNote: {
-        title: '我的笔记',
-        content: '我的笔记内容',
-        createdAtFriendly: '一天前',
-        updatedAtFriendly: '刚刚',
-        statusText: '未更新',
-      }
+      curNote: {},
+      notes: [],
+      statusText: '笔记未改动',
+      isShowPreview: false,
+    }
+  },
+  computed: {
+    previewContent() {
+      return md.render(this.curNote.content || '')
     }
   },
   created() {
@@ -44,9 +57,35 @@ export default {
       if (!data.isLogin) {
         this.$router.push({path: 'login'})
       }
+      Bus.$on('update:notes', val => {
+        this.curNote = val.find(note => note.id === parseInt(this.$route.query.noteId)) || {}
+      })
     })
-
-  }
+  },
+  beforeRouteUpdate(to, from, next) {
+    this.curNote = this.notes.find(note => note.id === parseInt(to.query.noteId)) || {}
+    next()
+  },
+  methods: {
+    updateNote: _.debounce(function () {
+      Notes.updateNote({noteId: this.curNote.id},
+        {title: this.curNote.title, content: this.curNote.content})
+        .then(data => {
+          this.statusText = '已保存'
+        })
+        .catch(data => {
+          this.statusText = '保存出错'
+        })
+    }, 300),
+    deleteNote() {
+      Notes.deleteNote({noteId: this.curNote.id})
+        .then(data => {
+          this.$message.success(data.msg)
+          this.notes.splice(this.notes.indexOf(this.curNote.id), 1)
+          this.$router.push('/note')
+        })
+    }
+  },
 }
 </script>
 
@@ -64,6 +103,24 @@ export default {
 .note-detail {
   flex: 1;
   background: #ffffff;
+  width: 100%;
+}
+
+.note-empty {
+  font-size: 50px;
+  color: #ccc;
+  text-align: center;
+  height: 100%;
+}
+
+.note-main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.note-main .editor {
+  flex: 1;
 }
 
 .note-bar {
@@ -76,6 +133,10 @@ export default {
   margin-right: 5px;
   color: #ccc;
   font-size: 12px;
+}
+
+.iconfont {
+  cursor: pointer;
 }
 
 .note-bar .icon-delete {
@@ -95,6 +156,7 @@ export default {
   outline: none;
   border: none;
   font-size: 18px;
+  width: 100%;
 }
 
 .editor textarea {
@@ -105,5 +167,6 @@ export default {
   font-size: 16px;
   width: 100%;
   height: 100%;
+  flex: 1;
 }
 </style>

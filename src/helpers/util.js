@@ -7,16 +7,16 @@ export function friendlyDate(dataStr) {
 
   switch (true) {
     // 一分钟内
-    case space < 60000:
+    case space < 60 * 1000:
       str = '刚刚'
       break
     // 一小时内
-    case space < 1000 * 3600:
+    case space < 1000 * 60 * 60:
       str = Math.floor(space / 60000) + '分钟前'
       break
     // 一天内
     case space < 1000 * 3600 * 24:
-      str = Math.floor(space / 1000 * 3600) + '小时前'
+      str = Math.floor(space / (1000 * 3600)) + '小时前'
       break
     // 一月内
     case space < 1000 * 3600 * 24 * 30:

@@ -12,26 +12,26 @@
           </el-dropdown-menu>
         </el-dropdown>
       </div>
-      <div class="btn">添加笔记</div>
+      <div class="btn" @click="addNote">添加笔记</div>
     </div>
     <div class="main">
-      <div class="left">更新时间</div>
+      <div class="left">创建时期</div>
       <div class="right">标题</div>
     </div>
-    <div class="list" v-for="note in notes" :key="note.title">
+    <div class="list" v-for="note in notes" :key="note.title"
+         :class="parseInt($route.query.noteId) === note.id ? 'active': ''">
       <router-link class="link" :to="`/note?noteId=${note.id}&notebookId=${curBook.id}`">
-        <span class="date" @click="con(note)">{{ note.createdfriendly }}</span>
+        <span class="date">{{ note.createdfriendly }}</span>
         <span class="title">{{ note.title }}</span>
       </router-link>
     </div>
-
   </div>
 </template>
-
-
 <script>
+
 import Notebooks from '../apis/notebook'
 import Notes from '../apis/notes'
+import Bus from '../helpers/bus'
 
 export default {
   data() {
@@ -46,28 +46,34 @@ export default {
       this.notebooks = res.data
       this.curBook = this.notebooks.find(notebook => notebook.id.toString() === this.$route.query.notebookId)
         || this.notebooks[0] || {}
-      console.log(this.curBook)
       return Notes.getAll({notebookId: this.curBook.id})
-        .then(res => this.notes = res.data)
+        .then(res => {
+            this.notes = res.data
+            this.$emit('update:notes', this.notes)
+            Bus.$emit('update:notes', this.notes)
+          }
+        )
     })
   },
   methods: {
-    con(x){
-      console.log(x)
-      console.log(x.createdfriendly)
-    },
     handleCommand(command) {
       this.curBook = command
       this.$message('click on notebookId ' + command.id);
       Notes.getAll({notebookId: command.id})
         .then(res => {
           this.notes = res.data
+          this.$emit('update:notes', this.notes)
         })
     },
+    addNote() {
+      Notes.addNote({notebookId: this.curBook.id})
+        .then(res => {
+          this.notes.unshift(res.data)
+        })
+    }
   },
 }
 </script>
-
 <style scoped>
 .note-sidebar {
   width: 320px;
