@@ -11,16 +11,6 @@ import SideBar from "./components/SideBar";
 export default {
   name: 'App',
   components: {SideBar},
-  // directives: {
-  //   'on2': {
-  //     inserted(el, info) {
-  //       el.addEventListener(info.arg, info.value)
-  //     },
-  //     unbind(el, info) {
-  //       el.removeEventListener(info.arg, info.value)
-  //     }
-  //   }
-  // }
 }
 </script>
 

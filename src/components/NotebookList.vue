@@ -13,7 +13,8 @@
       <div class="book-list">
         <router-link :to="`/note?notebookId=${notebook.id}`" v-for="notebook in notebooks" class="list"
                      :key="notebook.title">
-          <div class="left"><i>img</i>
+          <div class="left">
+            <span class="iconfont icon-notebook"></span>
             <h3>{{ notebook.title }}</h3>
             <span>{{ notebook.noteCounts }}</span></div>
           <div class="right">
@@ -30,14 +31,16 @@
 import Auth from '../apis/auth'
 import Notebook from '../apis/notebook'
 import {friendlyDate} from "../helpers/util";
+import {mapState, mapGetters, mapMutations, mapActions} from 'vuex'
 
 export default {
   name: 'Login',
   data() {
-    return {
-      msg: '',
-      notebooks: [],
-    }
+    return {}
+  },
+  computed: {
+    ...mapGetters(['notebooks']),
+
   },
   created() {
     Auth.getInfo().then(data => {
@@ -46,11 +49,14 @@ export default {
         }
       },
     )
-    Notebook.getAll().then(res => {
-      this.notebooks = Array.from(res.data)
-    })
+    // Notebook.getAll().then(res => {
+    //   this.notebooks = Array.from(res.data)
+    // })
+    this.getNotebook()
   },
+
   methods: {
+    ...mapActions(['addNotebook', 'deleteNotebook', 'updateNotebook', 'getNotebook']),
     onCreate() {
       this.$prompt('请输入要添加的笔记本标题', '提示', {
         confirmButtonText: '确定',
@@ -58,14 +64,7 @@ export default {
         inputPattern: /^.{0,30}$/,
         inputErrorMessage: '标题不能为空或者超过30个字符'
       }).then(({value}) => {
-        return Notebook.addNotebook({title: value})
-      }).then(res => {
-        res.data.friendlycreatedAt = friendlyDate(res.data.createdAt)
-        this.notebooks.unshift(res.data)
-        this.$message({
-          type: 'success',
-          message: res.msg
-        })
+        this.addNotebook({title: value})
       })
     },
     onEdit(notebook) {
@@ -78,18 +77,8 @@ export default {
         inputErrorMessage: '标题不能为空或者超过30个字符'
       }).then(({value}) => {
         title = value
-        return Notebook.updateNotebook(notebook.id, {title: value})
-      }).then(res => {
+        this.updateNotebook({notebookId: notebook.id, title: value})
         notebook.title = title
-        this.$message({
-          type: 'success',
-          message: res.msg
-        })
-      }).catch(res => {
-        this.$message({
-          type: 'info',
-          message: res
-        })
       })
     },
     onDelete(notebook) {
@@ -98,18 +87,11 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        return Notebook.deleteNodeBook(notebook.id)
+        // return Notebook.deleteNodeBook(notebook.id)
+        this.deleteNotebook({notebookId: notebook.id})
       }).then(res => {
         this.notebooks.splice(this.notebooks.indexOf(notebook), 1)
-        this.$message({
-          type: 'success',
-          message: res.msg
-        })
-      }).catch(res => {
-        this.$message({
-          type: 'info',
-          message: res
-        })
+
       })
     }
   },
@@ -167,8 +149,9 @@ main .list-title {
 }
 
 .list .left {
-  display: inline-block;
   flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .right {

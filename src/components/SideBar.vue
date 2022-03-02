@@ -18,7 +18,6 @@ import Auth from '../apis/auth'
 import Bus from '../helpers/bus'
 
 export default {
-
   components: {avatar},
   methods: {
     onLogout() {

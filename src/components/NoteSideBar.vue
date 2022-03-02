@@ -12,7 +12,7 @@
           </el-dropdown-menu>
         </el-dropdown>
       </div>
-      <div class="btn" @click="addNote">添加笔记</div>
+      <div class="btn" @click="onAddNote">添加笔记</div>
     </div>
     <div class="main">
       <div class="left">创建时期</div>
@@ -32,44 +32,34 @@
 import Notebooks from '../apis/notebook'
 import Notes from '../apis/notes'
 import Bus from '../helpers/bus'
+import {mapActions, mapState, mapGetters, mapMutations} from "vuex"
 
 export default {
   data() {
-    return {
-      notebooks: [],
-      notes: [],
-      curBook: {},
-    }
+    return {}
+  },
+  computed: {
+    ...mapGetters(['notebooks', 'curBook', 'notes']),
   },
   created() {
-    Notebooks.getAll().then(res => {
-      this.notebooks = res.data
-      this.curBook = this.notebooks.find(notebook => notebook.id.toString() === this.$route.query.notebookId)
-        || this.notebooks[0] || {}
-      return Notes.getAll({notebookId: this.curBook.id})
-        .then(res => {
-            this.notes = res.data
-            this.$emit('update:notes', this.notes)
-            Bus.$emit('update:notes', this.notes)
-          }
-        )
+    this.getNotebook()
+      .then(() => {
+        this.setCurBook({curBookId: this.$route.query.notebookId})
+        return this.getNote({notebookId: this.curBook.id})
+      }).then(() => {
+      this.setCurNote({curNoteId: this.$route.query.noteId})
+
     })
   },
   methods: {
-    handleCommand(command) {
-      this.curBook = command
-      this.$message('click on notebookId ' + command.id);
-      Notes.getAll({notebookId: command.id})
-        .then(res => {
-          this.notes = res.data
-          this.$emit('update:notes', this.notes)
-        })
+    ...mapMutations(['setCurBook', 'setCurNote']),
+    ...mapActions(['getNotebook', 'getNote', 'addNote']),
+    handleCommand(notebook) {
+      this.$store.commit('setCurBook', {curBookId: notebook.id})
+      this.getNote({notebookId: notebook.id})
     },
-    addNote() {
-      Notes.addNote({notebookId: this.curBook.id})
-        .then(res => {
-          this.notes.unshift(res.data)
-        })
+    onAddNote() {
+      this.addNote({notebookId: this.curBook.id})
     }
   },
 }

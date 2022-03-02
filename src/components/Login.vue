@@ -16,6 +16,7 @@
           <input type="password" placeholder="输入密码" v-model="login.password" @change="ValidLogin">
           <p :class="{error:login.isError}">{{ login.notice }}</p>
           <button class="button">登录</button>
+
         </div>
       </form>
     </div>
@@ -25,6 +26,8 @@
 <script>
 import Auth from '../apis/auth'
 import Bus from '../helpers/bus'
+import {mapGetters, mapActions} from "vuex";
+
 export default {
   name: 'Login',
   data() {
@@ -48,8 +51,9 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['loginUser','registerUser']),
     // 显示注册表单
-    showRegister(e) {
+    showRegister() {
       this.isShowRegister = true
       this.isShowLogin = false
     },
@@ -129,7 +133,7 @@ export default {
 }
 </script>
 
-<style  scoped>
+<style scoped>
 /*遮罩，遮住全屏*/
 .model-mask {
   position: fixed;
